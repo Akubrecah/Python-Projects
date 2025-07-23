@@ -4,6 +4,7 @@ import threading
 import sys
 import tkinter as tk
 from tkinter import messagebox, font
+import winsound  # For Windows beep; use alternative for Linux/Mac
 
 # =========================
 # ADVANCED COUNTDOWN TIMER (GUI)
@@ -186,6 +187,12 @@ class CountdownGUI:
             self.start_btn.config(state="normal")
             self.entry.config(state="normal")
             self.running = False
+            # Play beeping sound 3 times at the end
+            try:
+                for _ in range(3):
+                    winsound.Beep(1000, 300)  # Frequency, Duration(ms)
+            except Exception:
+                print('\a')  # Fallback beep
             return
         self.remaining -= 1
         self.root.after(1000, self.update_timer)
