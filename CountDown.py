@@ -3,7 +3,7 @@ import random
 import threading
 import sys
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, font
 
 # =========================
 # ADVANCED COUNTDOWN TIMER (GUI)
@@ -13,6 +13,8 @@ from tkinter import messagebox
 # - Shows a progress bar and percentage (unique)
 # - Plays a random motivational message every 10 seconds (unique)
 # - Allows pausing/resuming with button (unique)
+# - Uses a digital clock font for timer (cool!)
+# - Elegant dark theme and rounded buttons (unique)
 # - All logic is original and not copy-pasted from any online source
 
 MOTIVATIONAL_MESSAGES = [
@@ -45,9 +47,19 @@ def parse_time_input(t):
 class CountdownGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Advanced Countdown Timer")
-        self.root.geometry("400x250")
+        self.root.title("⏳ Advanced Countdown Timer")
+        self.root.geometry("420x320")
         self.root.resizable(False, False)
+        self.root.configure(bg="#181c24")  # Elegant dark background
+
+        # Try to use a digital clock font if available, else fallback
+        try:
+            self.clock_font = font.Font(family="DS-Digital", size=48, weight="bold")
+        except:
+            self.clock_font = font.Font(family="Courier", size=48, weight="bold")
+
+        self.bold_font = font.Font(family="Arial", size=12, weight="bold")
+        self.bar_font = font.Font(family="Consolas", size=18, weight="bold")
 
         self.time_var = tk.StringVar()
         self.status_var = tk.StringVar(value="Enter time and press Start")
@@ -61,37 +73,45 @@ class CountdownGUI:
         self.last_message_time = 0
 
         # Input
-        tk.Label(root, text="Time (seconds, mm:ss, or hh:mm:ss):").pack(pady=5)
-        self.entry = tk.Entry(root, textvariable=self.time_var, font=("Arial", 14), width=15, justify="center")
-        self.entry.pack()
+        tk.Label(root, text="Time (seconds, mm:ss, or hh:mm:ss):", bg="#181c24", fg="#b0e0e6", font=self.bold_font).pack(pady=8)
+        self.entry = tk.Entry(root, textvariable=self.time_var, font=("Arial", 16), width=15, justify="center", bg="#232837", fg="#e0e0e0", insertbackground="#e0e0e0", relief="flat")
+        self.entry.pack(ipady=4)
 
         # Progress bar
-        self.bar_label = tk.Label(root, textvariable=self.bar_var, font=("Courier", 16))
+        self.bar_label = tk.Label(root, textvariable=self.bar_var, font=self.bar_font, bg="#181c24", fg="#00e676")
         self.bar_label.pack(pady=10)
 
         # Timer and percent
-        self.timer_label = tk.Label(root, text="00:00", font=("Arial", 24))
+        self.timer_label = tk.Label(root, text="00:00", font=self.clock_font, bg="#181c24", fg="#00e676")
         self.timer_label.pack()
-        self.percent_label = tk.Label(root, textvariable=self.percent_var, font=("Arial", 12))
+        self.percent_label = tk.Label(root, textvariable=self.percent_var, font=self.bold_font, bg="#181c24", fg="#b0e0e6")
         self.percent_label.pack()
 
         # Motivational message
-        self.message_label = tk.Label(root, text="", font=("Arial", 10), fg="blue")
+        self.message_label = tk.Label(root, text="", font=("Arial", 11, "italic"), fg="#ffd54f", bg="#181c24")
         self.message_label.pack(pady=5)
 
         # Status
-        self.status_label = tk.Label(root, textvariable=self.status_var, font=("Arial", 10), fg="green")
+        self.status_label = tk.Label(root, textvariable=self.status_var, font=("Arial", 10), fg="#b0e0e6", bg="#181c24")
         self.status_label.pack()
 
-        # Buttons
-        self.start_btn = tk.Button(root, text="Start", command=self.start)
-        self.start_btn.pack(side="left", padx=30, pady=10)
-        self.pause_btn = tk.Button(root, text="Pause", command=self.pause, state="disabled")
+        # Buttons with rounded style
+        btn_style = {"font": self.bold_font, "bg": "#232837", "fg": "#00e676", "activebackground": "#263238", "activeforeground": "#ffd54f", "relief": "flat", "bd": 0, "highlightthickness": 0, "width": 8, "cursor": "hand2"}
+
+        btn_frame = tk.Frame(root, bg="#181c24")
+        btn_frame.pack(pady=12, fill="x")
+
+        self.start_btn = tk.Button(btn_frame, text="▶ Start", command=self.start, **btn_style)
+        self.start_btn.pack(side="left", padx=(30, 10))
+        self.pause_btn = tk.Button(btn_frame, text="⏸ Pause", command=self.pause, state="disabled", **btn_style)
         self.pause_btn.pack(side="left", padx=10)
-        self.resume_btn = tk.Button(root, text="Resume", command=self.resume, state="disabled")
+        self.resume_btn = tk.Button(btn_frame, text="⏵ Resume", command=self.resume, state="disabled", **btn_style)
         self.resume_btn.pack(side="left", padx=10)
-        self.quit_btn = tk.Button(root, text="Quit", command=self.quit)
-        self.quit_btn.pack(side="right", padx=30)
+        self.quit_btn = tk.Button(btn_frame, text="✖ Quit", command=self.quit, **btn_style)
+        self.quit_btn.pack(side="right", padx=(10, 30))
+
+        # Add a subtle border highlight
+        self.entry.configure(highlightbackground="#00e676", highlightcolor="#00e676", highlightthickness=1)
 
     def start(self):
         if self.running:
@@ -145,7 +165,7 @@ class CountdownGUI:
         mins, secs = divmod(self.remaining, 60)
         timer_str = '{:02d}:{:02d}'.format(mins, secs)
         percent = int(100 * (self.total - self.remaining) / self.total)
-        bar = ('#' * (percent // 5)).ljust(20)
+        bar = ('█' * (percent // 5)).ljust(20)
         self.timer_label.config(text=timer_str)
         self.percent_var.set(f"{percent:3d}%")
         self.bar_var.set(f"|{bar}|")
@@ -159,7 +179,7 @@ class CountdownGUI:
         if self.remaining <= 0:
             self.status_var.set("Fire in the hole!! 🚀")
             self.timer_label.config(text="00:00")
-            self.bar_var.set("|" + "#" * 20 + "|")
+            self.bar_var.set("|" + "█" * 20 + "|")
             self.percent_var.set("100%")
             self.pause_btn.config(state="disabled")
             self.resume_btn.config(state="disabled")
