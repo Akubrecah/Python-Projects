@@ -243,3 +243,65 @@ self.bot.find_element_by_xpath(
 # time.sleep(4)
 # 9th pop-up box
 self.bot.find_element_by_xpath(
+    '/html/body/div[4]/div/div/div/div[3]/button[2]').click()
+
+for i in user:
+
+    # enter the username
+    self.bot.find_element_by_xpath(
+        '/html/body/div[4]/div/div/div[2]/div[1]/div/div[2]/input').send_keys(i)
+    time.sleep(2)
+
+    # click on the username
+    self.bot.find_element_by_xpath(
+        '/html/body/div[4]/div/div/div[2]/div[2]/div').click()
+    time.sleep(2)
+
+    # next button
+    self.bot.find_element_by_xpath(
+        '/html/body/div[4]/div/div/div[1]/div/div[2]/div/button').click()
+    time.sleep(2)
+
+    # click on message area
+    send = self.bot.find_element_by_xpath(
+        '/html/body/div[1]/section/div/div[2]/div/div/div[2]/div[2]/div/div[2]/div/div/div[2]/textarea')
+
+    # types message
+    send.send_keys(self.message)
+    time.sleep(1)
+
+    # send message
+    send.send_keys(Keys.RETURN)
+    time.sleep(2)
+
+    # clicks on pencil icon
+    self.bot.find_element_by_xpath(
+        '/html/body/div[1]/section/div/div[2]/div/div/div[1]/div[1]/div/div[3]/button').click()
+    time.sleep(2)
+    # here will take the next username from the user's list.
+
+    self.bot.find_element_by_xpath(
+        '/html/body/div[4]/div/div/div[2]/div[1]/div/div[2]/input').clear()
+    time.sleep(1)
+    self.bot.find_element_by_xpath(
+        '/html/body/div[4]/div/div/div[2]/div[1]/div/div[2]/input').send_keys(i)
+    time.sleep(2)
+    def init():
+  
+    # you can even enter your personal account.
+    bot('username', 'password', user, message_)
+    input("DONE")
+# NOTE: Make sure to replace 'your_username', 'your_password', and the audience list
+# with actual values. Also, ensure that you have the necessary permissions to send messages
+# to the users in the audience list. This script uses Selenium to automate the process of logging
+# into Instagram and sending messages to a list of users. Ensure you have the required packages installed:
+# `selenium`, `webdriver_manager`, and a compatible version of ChromeDriver for your Chrome browser.
+# This script uses Selenium to automate the process of logging into Instagram and sending messages to a
+# list of users. Ensure you have the required packages installed: `selenium`, `webdriver_manager`, and a compatible version of ChromeDriver for your Chrome browser.
+# This script uses Selenium to automate the process of logging into Instagram and sending messages to a list of users.
+# Ensure you have the required packages installed: `selenium`, `webdriver_manager`, and a compatible version of ChromeDriver for your Chrome browser.
+# This script uses Selenium to automate the process of logging into Instagram and sending
+# messages to a list of users. Ensure you have the required packages installed: `selenium`, `webdriver_manager`, and a compatible version of ChromeDriver for your Chrome browser.
+# calling this function will message everyone's
+# that is on your user's list...:)
+init()
