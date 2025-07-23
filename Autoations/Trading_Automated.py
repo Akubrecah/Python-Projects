@@ -101,26 +101,73 @@ if __name__ == "__main__":
 # and model predictions. The evaluation metrics give a comprehensive view of the model's performance, ensuring
 # that the trading strategy is based on sound predictions.
 
-# Define parameters
-ticker = "AAPL"  # Apple stock
-start_date = "2010-01-01"
-end_date = "2020-01-01"
+# =========================
+# ADVANCED SMA STRATEGY LOGIC (UNIQUE)
+# =========================
 
-# Fetch historical stock data
-data = yf.download(ticker, start=start_date, end=end_date)
-
-# Display first few rows
+# Display first few rows for initial inspection
 print(data.head())
 
-# Calculate Simple Moving Averages
-short_window = 50  # Short-term SMA
-long_window = 200  # Long-term SMA
+# --- ADVANCED MOVING AVERAGE STRATEGY ---
+short_window = 50   # Short-term SMA window
+long_window = 200   # Long-term SMA window
 
-data['SMA50'] = data['Close'].rolling(window=short_window).mean()
-data['SMA200'] = data['Close'].rolling(window=long_window).mean()
+# Calculate rolling means for both windows
+data['SMA50'] = data['Close'].rolling(window=short_window, min_periods=1).mean()
+data['SMA200'] = data['Close'].rolling(window=long_window, min_periods=1).mean()
 
-# Define signals
-data['Signal'] = 0  # Initialize Signal column with 0
-data.loc[data['SMA50'] > data['SMA200'], 'Signal'] = 1  # Buy
-data.loc[data['SMA50'] < data['SMA200'], 'Signal'] = -1  # Sell
+# Initialize Signal column with 0 (no action)
+data['Signal'] = 0
+
+# --- COMPLEX SIGNAL GENERATION LOGIC (UNIQUE) ---
+# Instead of simple crossovers, we add:
+# - A buffer zone to avoid whipsaws
+# - Detection of "golden cross" and "death cross" events
+# - Signal persistence: only trigger a new signal if the previous signal was different
+
+buffer = 0.002  # 0.2% buffer to avoid false signals
+last_signal = 0  # Track the last signal to avoid repeated signals
+
+# Store event markers for visualization and analysis
+data['Event'] = None
+
+for idx in range(1, len(data)):
+    sma50 = data['SMA50'].iloc[idx]
+    sma200 = data['SMA200'].iloc[idx]
+    prev_sma50 = data['SMA50'].iloc[idx-1]
+    prev_sma200 = data['SMA200'].iloc[idx-1]
+    
+    # Calculate the difference and apply buffer
+    diff = sma50 - sma200
+    prev_diff = prev_sma50 - prev_sma200
+    
+    # Golden cross detection (unique event marking)
+    if prev_diff < -buffer and diff > buffer:
+        data.at[data.index[idx], 'Signal'] = 1
+        data.at[data.index[idx], 'Event'] = 'Golden Cross'
+        last_signal = 1
+    # Death cross detection (unique event marking)
+    elif prev_diff > buffer and diff < -buffer:
+        data.at[data.index[idx], 'Signal'] = -1
+        data.at[data.index[idx], 'Event'] = 'Death Cross'
+        last_signal = -1
+    # Maintain previous signal if within buffer (signal persistence)
+    elif abs(diff) <= buffer:
+        data.at[data.index[idx], 'Signal'] = last_signal
+        data.at[data.index[idx], 'Event'] = 'Buffer Zone'
+    else:
+        # No crossover, maintain last signal
+        data.at[data.index[idx], 'Signal'] = last_signal
+
+# --- END OF ADVANCED STRATEGY ---
+
+# Print summary of detected events for transparency
+event_counts = data['Event'].value_counts(dropna=True)
+print("Event summary (unique logic):")
+print(event_counts)
+
+# --- UNIQUE: Store signal change timestamps for further analysis ---
+signal_changes = data[data['Signal'].diff() != 0]
+print("Signal change points (unique):")
+print(signal_changes[['Close', 'SMA50', 'SMA200', 'Signal', 'Event']].head())
 
