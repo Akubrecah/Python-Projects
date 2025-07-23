@@ -1,7 +1,9 @@
 # Super Enhanced Hangman Game with categories, hints, scoring, leaderboard, and more!
+# Now with: streak bonuses, time-based scoring, secret achievements, and emoji feedback!
 
 import random
 import sys
+import time
 
 # ANSI color codes for fun output
 class Colors:
@@ -56,8 +58,25 @@ categories = {
     }
 }
 
-# In-memory leaderboard
+# In-memory leaderboard: player_name -> high score
 leaderboard = {}
+
+# In-memory streaks: player_name -> current win streak
+streaks = {}
+
+# In-memory achievements: player_name -> set of achievements
+achievements = {}
+
+# Emoji feedback for fun!
+EMOJI_CORRECT = "✅"
+EMOJI_WRONG = "❌"
+EMOJI_WIN = "🏆"
+EMOJI_LOSE = "💀"
+EMOJI_STREAK = "🔥"
+EMOJI_FAST = "⚡"
+EMOJI_HINT = "💡"
+EMOJI_BUY = "💰"
+EMOJI_ACHIEVEMENT = "🎉"
 
 def choose_category():
     """Prompt user to choose a category or all categories."""
@@ -101,7 +120,7 @@ def get_word_and_hint(category, difficulty):
     return category, difficulty, word, hint
 
 def display_word(word, letterGuessed):
-    """Display the current state of the guessed word."""
+    """Display the current state of the guessed word with color and spacing."""
     display = ''
     for char in word:
         if char in letterGuessed:
@@ -126,17 +145,30 @@ def hangman_graphic(chances, total_chances):
     print(Colors.OKBLUE + stages[idx] + Colors.ENDC)
 
 def show_leaderboard():
-    """Display the leaderboard."""
+    """Display the leaderboard with streaks and achievements."""
     print(Colors.BOLD + "\nLeaderboard:" + Colors.ENDC)
     if not leaderboard:
         print("No scores yet!")
         return
     sorted_scores = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
     for i, (name, score) in enumerate(sorted_scores, 1):
-        print(f"{i}. {name}: {score}")
+        streak = f"{EMOJI_STREAK} {streaks.get(name,0)}" if streaks.get(name,0) > 1 else ""
+        ach = f"{EMOJI_ACHIEVEMENT} {', '.join(achievements.get(name, []))}" if achievements.get(name) else ""
+        print(f"{i}. {name}: {score} {streak} {ach}")
+
+def unlock_achievement(player_name, achievement):
+    """Unlock a secret achievement for the player."""
+    if player_name not in achievements:
+        achievements[player_name] = set()
+    if achievement not in achievements[player_name]:
+        achievements[player_name].add(achievement)
+        print(Colors.BOLD + Colors.OKCYAN + f"{EMOJI_ACHIEVEMENT} Achievement unlocked: {achievement}! {EMOJI_ACHIEVEMENT}" + Colors.ENDC)
 
 def play_game(player_name):
-    """Main game logic for one round."""
+    """
+    Main game logic for one round.
+    Adds: time-based scoring, streak bonuses, secret achievements, emoji feedback.
+    """
     category = choose_category()
     difficulty = choose_difficulty(category)
     category, difficulty, word, hint = get_word_and_hint(category, difficulty)
@@ -150,6 +182,9 @@ def play_game(player_name):
     score = 0
     used_hint = False
     bought_chance = False
+    correct_streak = 0  # For bonus
+    start_time = time.time()
+    fast_win = False
 
     try:
         while chances > 0:
@@ -159,13 +194,13 @@ def play_game(player_name):
             print(f"Chances left: {chances} | Score: {score}")
             hangman_graphic(chances, total_chances)
 
-            print(Colors.OKCYAN + "Options: [hint] (-5 pts), [buy] extra chance (-10 pts), [quit]" + Colors.ENDC)
+            print(Colors.OKCYAN + f"Options: [hint] ({EMOJI_HINT}, -5 pts), [buy] extra chance ({EMOJI_BUY}, -10 pts), [quit]" + Colors.ENDC)
             guess = input('Enter a letter or option: ').lower().strip()
             if guess == "hint":
                 if used_hint:
                     print(Colors.WARNING + "You already used your hint!" + Colors.ENDC)
                 else:
-                    print(Colors.OKCYAN + f"Hint: {hint}" + Colors.ENDC)
+                    print(Colors.OKCYAN + f"Hint: {hint} {EMOJI_HINT}" + Colors.ENDC)
                     score -= 5
                     used_hint = True
                 continue
@@ -176,7 +211,7 @@ def play_game(player_name):
                     chances += 1
                     score -= 10
                     bought_chance = True
-                    print(Colors.OKGREEN + "You bought an extra chance!" + Colors.ENDC)
+                    print(Colors.OKGREEN + f"You bought an extra chance! {EMOJI_BUY}" + Colors.ENDC)
                 continue
             if guess == "quit":
                 print(Colors.WARNING + "You quit the round!" + Colors.ENDC)
@@ -196,22 +231,46 @@ def play_game(player_name):
             letterGuessed.add(guess)
 
             if guess in word:
-                print(Colors.OKGREEN + f"Good job! '{guess}' is in the word." + Colors.ENDC)
+                print(Colors.OKGREEN + f"Good job! '{guess}' is in the word. {EMOJI_CORRECT}" + Colors.ENDC)
                 score += 10
+                correct_streak += 1
+                # Secret achievement: 3 correct in a row
+                if correct_streak == 3:
+                    unlock_achievement(player_name, "Triple Strike")
+                # Secret achievement: guessed 'z'
+                if guess == 'z':
+                    unlock_achievement(player_name, "Z is for Zorro")
             else:
-                print(Colors.FAIL + f"Sorry, '{guess}' is not in the word." + Colors.ENDC)
+                print(Colors.FAIL + f"Sorry, '{guess}' is not in the word. {EMOJI_WRONG}" + Colors.ENDC)
                 chances -= 1
                 score -= 2
+                correct_streak = 0
 
             # Check if all letters are guessed
             if all(char in letterGuessed for char in word):
-                print(Colors.BOLD + "\nCongratulations, You won!" + Colors.ENDC)
+                elapsed = time.time() - start_time
+                print(Colors.BOLD + f"\nCongratulations, You won! {EMOJI_WIN}" + Colors.ENDC)
                 print(f"The word was: {Colors.OKGREEN}{word}{Colors.ENDC}")
                 score += 50
+                # Fast win bonus
+                if elapsed < 20:
+                    print(Colors.OKCYAN + f"Fast win! {EMOJI_FAST} +20 pts" + Colors.ENDC)
+                    score += 20
+                    fast_win = True
+                    unlock_achievement(player_name, "Speedster")
+                # Streak bonus
+                streaks[player_name] = streaks.get(player_name, 0) + 1
+                if streaks[player_name] > 1:
+                    print(Colors.OKCYAN + f"Streak bonus! {EMOJI_STREAK} +{streaks[player_name]*5} pts" + Colors.ENDC)
+                    score += streaks[player_name]*5
+                # Secret achievement: win without using hint or buying chance
+                if not used_hint and not bought_chance:
+                    unlock_achievement(player_name, "Pure Genius")
                 break
         else:
-            print(Colors.FAIL + "\nYou lost! Try again.." + Colors.ENDC)
+            print(Colors.FAIL + f"\nYou lost! {EMOJI_LOSE} Try again.." + Colors.ENDC)
             print(f"The word was: {Colors.OKGREEN}{word}{Colors.ENDC}")
+            streaks[player_name] = 0  # Reset streak on loss
 
         print(f"Your final score for this round: {Colors.BOLD}{score}{Colors.ENDC}")
         leaderboard[player_name] = max(score, leaderboard.get(player_name, 0))
