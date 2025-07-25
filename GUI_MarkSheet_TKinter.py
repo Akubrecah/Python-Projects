@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, font
-from PIL import Image, ImageTk
+from tkinter import ttk, messagebox
 import csv
 import os
 
@@ -36,16 +35,12 @@ class AcademicTranscriptGenerator:
                                     style='Header.TLabel')
         self.title_label.pack()
         
-        # University crest
-        try:
-            crest_img = Image.new('RGB', (80, 80), color='#2a2a3a')
-            self.crest = ImageTk.PhotoImage(crest_img)
-            self.crest_label = ttk.Label(self.header_frame, image=self.crest, 
-                                         background='#1e1e2d')
-            self.crest_label.image = self.crest
-            self.crest_label.place(x=20, y=5)
-        except:
-            pass
+        # University crest placeholder (text-based)
+        self.crest_label = ttk.Label(self.header_frame, text="◈", 
+                                    font=('Helvetica', 24), 
+                                    foreground='#d4af37', 
+                                    background='#1e1e2d')
+        self.crest_label.place(x=20, y=5)
         
         # Create student info frame
         self.info_frame = ttk.LabelFrame(master, text="Student Information", padding=15)
