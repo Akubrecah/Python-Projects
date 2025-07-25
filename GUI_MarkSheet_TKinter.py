@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import csv
 import os
+import datetime
+from fpdf import FPDF
 
 class AcademicTranscriptGenerator:
     def __init__(self, master):
@@ -143,6 +145,8 @@ class AcademicTranscriptGenerator:
                   command=self.reset_form).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.button_frame, text="Export to CSV", 
                   command=self.export_to_csv).pack(side=tk.LEFT, padx=10)
+        ttk.Button(self.button_frame, text="Export to PDF", 
+                  command=self.export_to_pdf).pack(side=tk.LEFT, padx=10)
         ttk.Button(self.button_frame, text="Exit", 
                   command=master.quit).pack(side=tk.RIGHT, padx=10)
         
@@ -288,6 +292,174 @@ class AcademicTranscriptGenerator:
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to export transcript: {str(e)}")
             self.status_var.set("Export failed")
+    
+    def export_to_pdf(self):
+        """Export transcript data to PDF file"""
+        # Validate student information
+        if not all(entry.get().strip() for entry in self.info_entries[:2]):
+            messagebox.showwarning("Missing Information", 
+                                  "Please enter at least student name and ID before exporting.")
+            return
+        
+        # Generate transcript if not already done
+        if self.total_credits_label.cget("text") == "0":
+            self.generate_transcript()
+        
+        # Ask user for save location
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")],
+            initialfile=f"Transcript_{self.info_entries[1].get()}"
+        )
+        
+        if not filename:
+            return  # User canceled
+        
+        try:
+            # Create PDF document
+            pdf = FPDF(orientation='P', unit='mm', format='A4')
+            pdf.add_page()
+            
+            # Set up colors
+            primary_color = (30, 30, 45)    # Dark blue: #1e1e2d
+            accent_color = (212, 175, 55)   # Gold: #d4af37
+            text_color = (0, 0, 0)          # Black
+            
+            # Header with university information
+            pdf.set_font('Helvetica', 'B', 16)
+            pdf.set_text_color(*accent_color)
+            pdf.cell(0, 10, "UNIVERSITY OF EXCELLENCE", ln=1, align='C')
+            pdf.set_font('Helvetica', 'B', 14)
+            pdf.cell(0, 8, "OFFICIAL ACADEMIC TRANSCRIPT", ln=1, align='C')
+            
+            # Divider
+            pdf.set_draw_color(*accent_color)
+            pdf.set_line_width(0.5)
+            pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+            pdf.ln(10)
+            
+            # Student information section
+            pdf.set_font('Helvetica', 'B', 12)
+            pdf.set_text_color(*primary_color)
+            pdf.cell(0, 8, "STUDENT INFORMATION", ln=1)
+            
+            pdf.set_font('Helvetica', '', 11)
+            pdf.set_text_color(*text_color)
+            info_labels = ["Full Name:", "Student ID:", "Program:", "Department:", "Academic Year:"]
+            
+            for i, label in enumerate(info_labels):
+                pdf.cell(45, 7, label)
+                pdf.cell(0, 7, self.info_entries[i].get(), ln=1)
+            
+            pdf.ln(5)
+            
+            # Course performance section
+            pdf.set_font('Helvetica', 'B', 12)
+            pdf.set_text_color(*primary_color)
+            pdf.cell(0, 8, "COURSE PERFORMANCE", ln=1)
+            pdf.ln(2)
+            
+            # Table headers
+            pdf.set_fill_color(*primary_color)
+            pdf.set_text_color(255, 255, 255)  # White text
+            pdf.set_font('Helvetica', 'B', 11)
+            
+            # Column widths
+            col_widths = [25, 80, 20, 20, 30]
+            
+            # Header row
+            headers = ["Code", "Course Title", "Credits", "Grade", "Points"]
+            for i, header in enumerate(headers):
+                pdf.cell(col_widths[i], 8, header, border=1, fill=True)
+            pdf.ln()
+            
+            # Table content
+            pdf.set_font('Helvetica', '', 10)
+            pdf.set_text_color(*text_color)
+            fill = False
+            
+            courses = [
+                ("CS201", "Data Structures & Algorithms", "4"),
+                ("CS202", "Database Systems", "4"),
+                ("MA201", "Advanced Calculus", "3"),
+                ("EC201", "Digital Electronics", "4"),
+                ("HU101", "Professional Ethics", "2")
+            ]
+            
+            for i, ((grade_var, points_label, credits), course) in enumerate(zip(
+                self.course_entries, courses)):
+                
+                code, title, _ = course
+                grade = grade_var.get()
+                points = points_label.cget("text") or "0.0"
+                
+                # Alternate row colors
+                if fill:
+                    pdf.set_fill_color(240, 240, 245)  # Light gray
+                else:
+                    pdf.set_fill_color(255, 255, 255)  # White
+                
+                # Course code
+                pdf.cell(col_widths[0], 8, code, border='LTR', fill=fill)
+                # Course title
+                pdf.cell(col_widths[1], 8, title, border='LTR', fill=fill)
+                # Credits
+                pdf.cell(col_widths[2], 8, credits, border='LTR', align='C', fill=fill)
+                # Grade
+                pdf.cell(col_widths[3], 8, grade, border='LTR', align='C', fill=fill)
+                # Points
+                pdf.cell(col_widths[4], 8, points, border='LTR', align='C', fill=fill, ln=1)
+                
+                fill = not fill
+            
+            # Bottom border
+            pdf.set_fill_color(255, 255, 255)
+            pdf.cell(sum(col_widths), 0, '', border='B', ln=1)
+            pdf.ln(5)
+            
+            # Academic summary
+            pdf.set_font('Helvetica', 'B', 12)
+            pdf.set_text_color(*primary_color)
+            pdf.cell(0, 8, "ACADEMIC SUMMARY", ln=1)
+            pdf.ln(2)
+            
+            pdf.set_font('Helvetica', '', 11)
+            pdf.set_text_color(*text_color)
+            
+            # Summary data
+            summary_data = [
+                ("Total Credits:", self.total_credits_label.cget("text")),
+                ("Total Grade Points:", self.total_points_label.cget("text")),
+                ("GPA:", self.gpa_label.cget("text")),
+                ("Academic Standing:", self.standing_label.cget("text"))
+            ]
+            
+            for label, value in summary_data:
+                pdf.cell(60, 8, label)
+                pdf.set_font('Helvetica', 'B', 11)
+                pdf.cell(0, 8, value, ln=1)
+                pdf.set_font('Helvetica', '', 11)
+            
+            pdf.ln(10)
+            
+            # Footer
+            today = datetime.date.today().strftime("%B %d, %Y")
+            pdf.set_font('Helvetica', 'I', 10)
+            pdf.set_text_color(100, 100, 100)
+            pdf.cell(0, 5, f"Generated on: {today}", ln=1, align='C')
+            pdf.cell(0, 5, "This is an official document issued by the University Registrar", 
+                    ln=1, align='C')
+            
+            # Save PDF
+            pdf.output(filename)
+            
+            self.status_var.set(f"Transcript exported to PDF")
+            messagebox.showinfo("Export Successful", 
+                              f"Transcript has been exported to {os.path.abspath(filename)}")
+            
+        except Exception as e:
+            messagebox.showerror("PDF Export Error", f"Failed to create PDF: {str(e)}")
+            self.status_var.set("PDF export failed")
 
 if __name__ == "__main__":
     root = tk.Tk()
