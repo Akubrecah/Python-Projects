@@ -25,11 +25,17 @@ ALLOWED_HOSTS = []
 # Application definition
 # To this:
 INSTALLED_APPS = [
-    # ...
-    # 'django_bootstrap5',  # ← Add this instead
+    'django.contrib.admin',         # Add this
+    'django.contrib.auth',          # Add this
+    'django.contrib.contenttypes',  # Add this
+    'django.contrib.sessions',      # Add this
+    'django.contrib.messages',      # Add this
+    'django.contrib.staticfiles',   # Add this
+    'django_bootstrap5',
     'weather_app',
 ]
 
+# Add this middleware section if missing
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
