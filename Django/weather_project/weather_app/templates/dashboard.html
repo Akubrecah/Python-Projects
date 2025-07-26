@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load bootstrap5 %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <h1 class="text-center mb-4">
+                <i class="fas fa-cloud-sun me-2"></i>WeatherSphere
+            </h1>
+            
+            <!-- Search Form -->
+            <form method="get" class="mb-4">
+                <div class="input-group">
+                    <input type="text" 
+                           name="city" 
+                           class="form-control form-control-lg" 
+                           placeholder="Search city..."
+                           value="{{ city }}">
+                    <button class="btn btn-light btn-lg" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Error Handling -->
+            {% if error %}
+                <div class="alert alert-danger text-center">
+                    {{ error|title }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Weather Card -->
+    {% if weather %}
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="weather-card p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-center">
+                        <h2 class="mb-3">{{ weather.name }}, {{ weather.sys.country }}</h2>
+                        <div class="temperature-display">
+                            {{ weather.main.temp|floatformat:0 }}°C
+                        </div>
+                        <div class="fs-5 mb-3">
+                            Feels like {{ weather.main.feels_like|floatformat:0 }}°C
+                        </div>
+                        <div class="weather-icon mb-3">
+                            <img src="http://openweathermap.org/img/wn/{{ weather.weather.0.icon }}@4x.png" 
+                                 alt="{{ weather.weather.0.description }}">
+                        </div>
+                        <h4>{{ weather.weather.0.description|title }}</h4>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="card bg-transparent border-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-wind fa-2x mb-2"></i>
+                                        <h5>Wind</h5>
+                                        <p class="mb-0">{{ weather.wind.speed }} m/s</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="card bg-transparent border-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-tint fa-2x mb-2"></i>
+                                        <h5>Humidity</h5>
+                                        <p class="mb-0">{{ weather.main.humidity }}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="card bg-transparent border-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-sun fa-2x mb-2"></i>
+                                        <h5>Pressure</h5>
+                                        <p class="mb-0">{{ weather.main.pressure }} hPa</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="card bg-transparent border-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-eye fa-2x mb-2"></i>
+                                        <h5>Visibility</h5>
+                                        <p class="mb-0">{{ weather.visibility|floatformat:0 }}m</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History & Forecast Section -->
+    <div class="row mt-4">
+        <!-- Search History -->
+        <div class="col-md-4 mb-4">
+            <div class="weather-card p-4">
+                <h4 class="mb-4"><i class="fas fa-history me-2"></i>Recent Searches</h4>
+                <ul class="list-group">
+                    {% for city in history %}
+                    <li class="list-group-item bg-transparent text-light border-light">
+                        <a href="?city={{ city.name }}" class="text-light text-decoration-none">
+                            {{ city.name }}
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item bg-transparent text-light border-light">
+                        No search history
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Forecast Chart -->
+        <div class="col-md-8">
+            <div class="weather-card p-4">
+                <h4 class="mb-4"><i class="fas fa-chart-line me-2"></i>5-Day Forecast</h4>
+                <canvas id="forecastChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Forecast Chart (Example using dummy data)
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            datasets: [{
+                label: 'Temperature (°C)',
+                data: [22, 19, 24, 21, 23],
+                borderColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                },
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
