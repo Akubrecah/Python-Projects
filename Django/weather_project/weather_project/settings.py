@@ -23,15 +23,11 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
+# To this:
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'weather_app',          # Custom weather app
-    'bootstrap5',           # Bootstrap integration
+    # ...
+    'django_bootstrap5',  # ← Add this instead
+    'weather_app',
 ]
 
 MIDDLEWARE = [
