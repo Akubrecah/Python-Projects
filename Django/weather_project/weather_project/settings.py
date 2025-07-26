@@ -26,7 +26,7 @@ ALLOWED_HOSTS = []
 # To this:
 INSTALLED_APPS = [
     # ...
-    'django_bootstrap5',  # ← Add this instead
+    # 'django_bootstrap5',  # ← Add this instead
     'weather_app',
 ]
 
